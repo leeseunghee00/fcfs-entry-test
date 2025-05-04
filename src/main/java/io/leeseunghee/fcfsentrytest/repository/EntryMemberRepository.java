@@ -7,18 +7,23 @@ import org.springframework.stereotype.Repository;
 public class EntryMemberRepository {
 
 	private final RedisTemplate<String, String> redisTemplate;
+	private static final String prefix = "entry_member:";
 
 	public EntryMemberRepository(RedisTemplate<String, String> redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
 
-	public boolean isAlreadyEntered(String memberId) {
-		return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember("entry_member", memberId));
+	public boolean isAlreadyEntered(Long premiereId, Long memberId) {
+		String key = prefix + premiereId.toString();
+
+		return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(key, memberId.toString()));
 	}
 
-	public void add(Long memberId) {
+	public void add(Long premiereId, Long memberId) {
+		String key = prefix + premiereId;
+
 		redisTemplate
 			.opsForSet()
-			.add("entry_member", memberId.toString());
+			.add(key, memberId.toString());
 	}
 }

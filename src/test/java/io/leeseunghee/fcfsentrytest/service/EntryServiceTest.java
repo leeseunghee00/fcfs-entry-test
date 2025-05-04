@@ -34,6 +34,63 @@ class EntryServiceTest {
 	@Autowired
 	private PremierTicketCountRepository premierTicketCountRepository;
 
+	@Autowired
+	private EntryLuaService entryLuaService;
+
+	@Test
+	void synchronized_선착순_50명_동시_접속_100명_일_때() throws InterruptedException {
+	    // given -- 테스트의 상태 설정
+		int threadCount = 100;
+		ExecutorService executorService = Executors.newFixedThreadPool(32);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+
+		// when -- 테스트하고자 하는 행동
+		for (int i = 0; i < threadCount; i++) {
+			long memberId = i;
+			executorService.submit(() -> {
+				try {
+					entryService.saveEntry_synchronized(new SaveEntryRequest(memberId, 1L));
+				} finally {
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await();
+
+		long count = entryRepository.count();
+
+		// then -- 예상되는 변화 및 결과
+		assertThat(count).isEqualTo(50);
+	}
+
+	@Test
+	void pessimistic_선착순_50명_동시_접속_100명_일_때() throws InterruptedException {
+	    // given -- 테스트의 상태 설정
+		int threadCount = 100;
+		ExecutorService executorService = Executors.newFixedThreadPool(32);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+
+		// when -- 테스트하고자 하는 행동
+		for (int i = 0; i < threadCount; i++) {
+			long memberId = i;
+			executorService.submit(() -> {
+				try {
+					entryService.saveEntry_pessimistic(new SaveEntryRequest(memberId, 1L));
+				} finally {
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await();
+
+		long count = entryRepository.count();
+
+		// then -- 예상되는 변화 및 결과
+		assertThat(count).isEqualTo(50);
+	}
+
 	@Test
 	void optimistic_선착순_50명_동시_접속_100명_일_때() throws InterruptedException {
 	    // given -- 테스트의 상태 설정
@@ -46,7 +103,7 @@ class EntryServiceTest {
 			long memberId = i;
 			executorService.submit(() -> {
 				try {
-					entryService.saveEntry(new SaveEntryRequest(memberId, 1L));
+					entryService.saveEntry_optimistic(new SaveEntryRequest(memberId, 1L));
 				} finally {
 					latch.countDown();
 				}
@@ -54,7 +111,6 @@ class EntryServiceTest {
 		}
 
 		latch.await();
-		// Thread.sleep(1000);
 
 		long count = entryRepository.count();
 
@@ -74,7 +130,7 @@ class EntryServiceTest {
 			long memberId = i + 1;
 			executorService.submit(() -> {
 				try {
-					entryService.saveEntry2(new SaveEntryRequest(memberId, 1L));
+					entryService.saveEntry_redisson(new SaveEntryRequest(memberId, 1L));
 				} finally {
 					latch.countDown();
 				}

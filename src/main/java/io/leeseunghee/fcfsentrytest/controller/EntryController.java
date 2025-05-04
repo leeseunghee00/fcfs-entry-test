@@ -1,5 +1,7 @@
 package io.leeseunghee.fcfsentrytest.controller;
 
+import java.io.IOException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,9 +17,10 @@ public class EntryController {
 
 	private final EntryService entryService;
 
+	// service 메서드만 바꿔서 테스트 진행
 	@PostMapping("/entry")
-	public ResponseEntity<?> createEntry(@RequestBody SaveEntryRequest request) {
-		entryService.saveEntry2(request);
+	public ResponseEntity<?> createEntry(@RequestBody SaveEntryRequest request) throws IOException {
+		entryService.saveEntry_lua(request);
 		return ResponseEntity.ok("Entry Success");
 	}
 }
